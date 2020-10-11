@@ -10,8 +10,8 @@ import java.util.concurrent.TimeUnit
 
 class MainViewModel : ViewModel() {
 
-    private val searchResult = BehaviorSubject.create<String>()
-    private val latestQuery: BehaviorSubject<String> = BehaviorSubject.create()
+    private val searchResultSubject = BehaviorSubject.create<String>()
+    private val latestQuerySubject: BehaviorSubject<String> = BehaviorSubject.create()
     private val loadingSubject = PublishSubject.create<Boolean>()
     private val errorSubject = PublishSubject.create<String>()
 
@@ -21,7 +21,7 @@ class MainViewModel : ViewModel() {
 
     // OUT Streams
     val searchResultLiveData =
-        LiveDataReactiveStreams.fromPublisher(searchResult.toFlowable(BackpressureStrategy.LATEST))
+        LiveDataReactiveStreams.fromPublisher(searchResultSubject.toFlowable(BackpressureStrategy.LATEST))
     val showLoadingLiveData =
         LiveDataReactiveStreams.fromPublisher(loadingSubject.toFlowable(BackpressureStrategy.LATEST))
     val errorLiveData =
@@ -30,9 +30,9 @@ class MainViewModel : ViewModel() {
     init {
         clickSubject.withLatestFrom(textSubject) { _, text -> text }
             .map { it.toString() }
-            .subscribe(latestQuery)
+            .subscribe(latestQuerySubject)
 
-        latestQuery.distinctUntilChanged()
+        latestQuerySubject.distinctUntilChanged()
             .doOnEach { loadingSubject.onNext(true) }
             .switchMap { query ->
                 simulateQuery(query)
@@ -42,7 +42,7 @@ class MainViewModel : ViewModel() {
                     .onErrorReturnItem("")
 
             }
-            .subscribe(searchResult)
+            .subscribe(searchResultSubject)
 
     }
 
